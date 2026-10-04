@@ -9,7 +9,7 @@ A retro arcade space shooter built with plain HTML5 canvas, JavaScript and CSS. 
 | Key | Action |
 | --- | --- |
 | ← → or A D | Move |
-| Space or Z | Fire. Each press fires one shot, and presses during the cooldown are ignored. |
+| Space or Z | Fire. Hold it to keep firing (auto fire); the fire cooldown sets the rate. |
 | Enter | Start, or play again |
 | P or Esc | Pause. The game also pauses when the window loses focus. |
 | M | Mute all sound |
@@ -21,6 +21,7 @@ A retro arcade space shooter built with plain HTML5 canvas, JavaScript and CSS. 
 - Enemies shoot straight down, and only while they are diving.
 - Every hit is a kill, for you and for them. You have 3 ships.
 - Clear all 5 levels to win. Each level is faster than the one before, and the formation grows from 5 rows to 7.
+- Clearing a level makes the jump to the next sector at warp speed.
 
 | Enemy | Tier | Targeting | In formation | In flight |
 | --- | --- | --- | --- | --- |
@@ -30,19 +31,33 @@ A retro arcade space shooter built with plain HTML5 canvas, JavaScript and CSS. 
 
 Higher tiers fire more often and make their turn decisions sooner.
 
+### Power-ups
+
+Shot-down enemies sometimes drop a power-up capsule (Omegas most often). Fly into it to collect it. Each power lasts 10 seconds (the shield 12), and different powers stack. The HUD shows your active powers with a timer bar at the bottom right. Losing a ship clears them.
+
+| Power | Effect |
+| --- | --- |
+| Scatter shot | Two extra shots angled out to the sides |
+| Multi shot | Each volley is followed by a second one |
+| Double shot | Two parallel shots instead of one |
+| Shield | Soaks up one hit. Crashing into a diver with it destroys the diver and scores the kill. |
+| Attack speed | Halves the fire cooldown |
+
 ## Tuning
 
 All gameplay numbers are in [`config.json`](config.json). Edit the file and reload the page. Times are in seconds, speeds in pixels per second, and the playfield is 480×640.
 
 | Section | What it controls |
 | --- | --- |
-| `player` | Move speed, fire cooldown, bullet speed, lives, respawn delay and post-respawn invulnerability, hitbox size |
-| `enemyTypes.*` | Per type: tier, points (`scoreFormation`, `scoreFlight`), how often it is picked to dive (`diveWeight`), `fireCooldownSec` (the minimum time between shots), `turnCooldownSec`, `bulletSpeed`, and `targeting` (`direct`, `weave` with `offsetPx`, or `lead` with `maxLeadSec`) |
+| `player` | Move speed, `autoFire` (hold to fire, or one shot per press), fire cooldown, bullet speed, lives, respawn delay and post-respawn invulnerability, hitbox size |
+| `enemyTypes.*` | Per type: tier, points (`scoreFormation`, `scoreFlight`), how often it is picked to dive (`diveWeight`), `fireCooldownSec` (the minimum time between shots), `turnCooldownSec`, `bulletSpeed`, power-up `dropChance` (0 to 1), and `targeting` (`direct`, `weave` with `offsetPx`, or `lead` with `maxLeadSec`) |
 | `enemyFire` | When divers may shoot: horizontal range to you, minimum gap above you, delay before the first shot |
+| `pickups` | Capsule fall speed, how many can be on screen, the minimum gap between drops, and per power: `weight` (how likely it is to drop, 0 to disable), `durationSec` (0 means until you lose a ship) and its effect settings: scatter `anglesDeg`, multi `extraVolleys`/`volleyGapSec`, double `spacingPx`, shield `hits`/`graceSec`, attack speed `cooldownMul` |
 | `dive` | Shared dive physics: fall speed, lateral steering speed, gain and acceleration, the peel-off loop, return speed, and `onExitBottom` (`return` to rejoin the formation, or `remove`) |
 | `formation` | Grid size and spacing, sway, warp-in time, and the row templates (type and columns), listed top to bottom |
 | `levels` | One entry per level: `rows` (taken from the top of the formation template), `speedMul`, `diveIntervalSec`, `maxDivers`, `maxEnemyBullets` |
 | `timing` | How long the level-start and level-clear banners stay up, and the lockout before you can restart |
+| `warp` | The level-clear warp jump: top star speed multiplier, delay before it engages, and ramp up and down times |
 | `audio` | Master, sound-effect and music volume, and the music tempo plus its increase per level |
 
 Mistakes in the config, such as an unknown targeting mode, show up as an error message on the page.
@@ -55,7 +70,7 @@ The game loads ES modules and `config.json`, so serve the folder over HTTP rathe
 python3 -m http.server 8000
 ```
 
-Then open http://localhost:8000. Add `?debug` to the URL for an FPS and entity overlay plus test keys: G toggles invulnerability, K clears the wave, and 1–5 jump to a level.
+Then open http://localhost:8000. Add `?debug` to the URL for an FPS and entity overlay plus test keys: G toggles invulnerability, K clears the wave, U drops a power-up (each in turn), and 1–5 jump to a level.
 
 ## Code layout
 
@@ -66,7 +81,7 @@ config.json          tuning data
 js/main.js           boot, canvas scaling, main loop
 js/game.js           game flow (title, levels, deaths, victory) and system order
 js/core/             world data, SoA pools, config compiler, helpers
-js/systems/          enemies (formation, dives, steering), targeting, combat, fx
+js/systems/          enemies (formation, dives, steering), targeting, combat, pickups (power-ups), fx
 js/gfx/              pixel art data, sprite rasterizer, renderer
 js/audio.js          synthesized sound effects and music (Web Audio API, no audio files)
 js/input.js          keyboard mapping

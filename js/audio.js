@@ -119,7 +119,7 @@ export function createAudio(settings) {
     osc.stop(at + dur + 0.02);
   }
 
-  function noise(dest, { at = ctx.currentTime, dur, vol, type = 'lowpass', f0, f1 = 0, q = 0.8 }) {
+  function noise(dest, { at = ctx.currentTime, dur, vol, type = 'lowpass', f0, f1 = 0, q = 0.8, attack = 0 }) {
     const src = ctx.createBufferSource();
     src.buffer = noiseBuf;
     src.loop = true;
@@ -129,7 +129,12 @@ export function createAudio(settings) {
     filter.frequency.setValueAtTime(f0, at);
     if (f1) filter.frequency.exponentialRampToValueAtTime(f1, at + dur);
     const env = ctx.createGain();
-    env.gain.setValueAtTime(vol, at);
+    if (attack) {
+      env.gain.setValueAtTime(0.0001, at);
+      env.gain.exponentialRampToValueAtTime(vol, at + attack);
+    } else {
+      env.gain.setValueAtTime(vol, at);
+    }
     env.gain.exponentialRampToValueAtTime(0.0001, at + dur);
     src.connect(filter);
     filter.connect(env);
@@ -181,6 +186,29 @@ export function createAudio(settings) {
     },
     gameOver() {
       jingle([69, 67, 65, [64, 2], null, [57, 5]], { wave: pulse50, step: 0.22, vol: 0.07 });
+    },
+    powerUp() {
+      jingle([72, 76, 79, 84, [88, 2]], { step: 0.05, vol: 0.09 });
+      tone(sfx, { wave: 'triangle', f0: 1400, f1: 2800, dur: 0.25, vol: 0.05 });
+    },
+    powerDown() {
+      jingle([76, [69, 2]], { wave: 'triangle', step: 0.08, vol: 0.08 });
+    },
+    shieldHit() {
+      tone(sfx, { wave: 'triangle', f0: 1800, f1: 900, dur: 0.18, vol: 0.12 });
+    },
+    shieldBreak() {
+      noise(sfx, { dur: 0.35, vol: 0.3, type: 'highpass', f0: 2500 });
+      tone(sfx, { wave: 'triangle', f0: 1600, f1: 200, dur: 0.4, vol: 0.12 });
+    },
+    // Warp jump: a rising whoosh in, a falling one out.
+    warpStart() {
+      noise(sfx, { dur: 1.2, vol: 0.25, type: 'bandpass', f0: 250, f1: 4000, q: 1.2, attack: 0.5 });
+      tone(sfx, { wave: 'sawtooth', f0: 70, f1: 900, dur: 1.0, vol: 0.06, attack: 0.4 });
+    },
+    warpEnd() {
+      noise(sfx, { dur: 0.9, vol: 0.2, type: 'bandpass', f0: 4000, f1: 200, q: 1.2 });
+      tone(sfx, { wave: 'sawtooth', f0: 900, f1: 60, dur: 0.8, vol: 0.05 });
     },
     victory() {
       jingle([67, 67, 67, [72, 3], null, 71, 72, [76, 6]], { step: 0.12 });
@@ -307,6 +335,18 @@ export function createAudio(settings) {
           return startMusic(ev.level, 0.5);
         case 'levelClear':
           return play.levelClear();
+        case 'powerUp':
+          return play.powerUp();
+        case 'powerDown':
+          return play.powerDown();
+        case 'shieldHit':
+          return play.shieldHit();
+        case 'shieldBreak':
+          return play.shieldBreak();
+        case 'warpStart':
+          return play.warpStart();
+        case 'warpEnd':
+          return play.warpEnd();
         case 'gameOver':
           stopMusic();
           return play.gameOver();

@@ -1,5 +1,5 @@
 // Rasterizes the pixel art in art.js into offscreen canvases (browser only).
-import { ART, PALETTES, FX, PIXEL } from './art.js';
+import { ART, PALETTES, FX, PIXEL, POWER_STYLE, PICKUP_ART_SIZE } from './art.js';
 import { mulberry32, TAU } from '../core/util.js';
 
 function makeCanvas(w, h) {
@@ -64,6 +64,27 @@ function blastFrames({ blast: [hot, main, dark, accent], size, frames }, seed) {
   return out;
 }
 
+// A power-up capsule: coloured rim, dark body, white icon. The blink frame
+// swaps rim and icon colours so falling capsules flash.
+function capsule(icon, color, scale, blink) {
+  const n = PICKUP_ART_SIZE;
+  const pad = (n - icon.length) / 2;
+  const rows = [];
+  for (let y = 0; y < n; y++) {
+    let row = '';
+    for (let x = 0; x < n; x++) {
+      const edgeX = x === 0 || x === n - 1;
+      const edgeY = y === 0 || y === n - 1;
+      if (edgeX && edgeY) row += '.';
+      else if (edgeX || edgeY) row += 'r';
+      else row += icon[y - pad]?.[x - pad] === 'x' ? 'i' : 'f';
+    }
+    rows.push(row);
+  }
+  const palette = blink ? { r: '#ffffff', f: '#0b1030', i: color } : { r: color, f: '#0b1030', i: '#ffffff' };
+  return rasterize(rows, palette, scale);
+}
+
 export function buildSprites() {
   const sprites = { blast: {} };
   for (const [name, frames] of Object.entries(ART)) {
@@ -72,5 +93,11 @@ export function buildSprites() {
   sprites.lifeIcon = rasterize(ART.player[0], PALETTES.player, 2);
   let seed = 11;
   for (const [kind, fx] of Object.entries(FX)) sprites.blast[kind] = blastFrames(fx, seed++);
+  sprites.pickup = {};
+  sprites.pickupIcon = {};
+  for (const [name, style] of Object.entries(POWER_STYLE)) {
+    sprites.pickup[name] = [capsule(style.icon, style.color, PIXEL, false), capsule(style.icon, style.color, PIXEL, true)];
+    sprites.pickupIcon[name] = capsule(style.icon, style.color, 2, false);
+  }
   return sprites;
 }

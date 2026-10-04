@@ -3,6 +3,7 @@ import { ST, playerKind } from '../core/world.js';
 import { spawn, remove } from '../core/pool.js';
 import { clamp } from '../core/util.js';
 import { spawnBlast, spawnDebris, spawnPopup, addShake } from './fx.js';
+import { POWER, hasPower, absorbHit, clearPowers, maybeDropPickup } from './pickups.js';
 
 export const PLAYER_BULLET = { halfW: 1.5, halfH: 6 };
 export const ENEMY_BULLET = { halfW: 1.5, halfH: 4.5 };
@@ -24,17 +25,58 @@ export function updatePlayer(w, dt, input, firePressed) {
   // Smoothed velocity feeds the omega's predictive targeting.
   p.vxSmooth += (p.vx - p.vxSmooth) * Math.min(1, dt * 5);
 
-  // One shot per key press, and presses during the cooldown are dropped.
-  if (firePressed && p.cooldown <= 0) {
-    const PB = w.playerBullets;
-    const b = spawn(PB);
-    if (b >= 0) {
-      PB.x[b] = p.x;
-      PB.y[b] = p.y - p.halfH - 8;
-      p.cooldown = P.fireCooldownSec;
-      w.events.push({ type: 'playerFire' });
+  // A press fires as soon as the cooldown allows; with auto fire, holding the
+  // key keeps firing at the cooldown rate. Presses during the cooldown are dropped.
+  const wantsFire = firePressed || (P.autoFire && input.down('fire'));
+  const WPN = w.cfg.weapon;
+  if (wantsFire && p.cooldown <= 0) {
+    fireVolley(w);
+    p.cooldown = P.fireCooldownSec * (hasPower(w, POWER.attackSpeed) ? WPN.attackSpeedMul : 1);
+    if (hasPower(w, POWER.multi)) {
+      p.volleysLeft = WPN.multiVolleys;
+      p.volleyTimer = WPN.multiGapSec;
     }
   }
+  // Multi shot: extra volleys follow the main one in quick succession.
+  if (p.volleysLeft > 0) {
+    p.volleyTimer -= dt;
+    if (p.volleyTimer <= 0) {
+      fireVolley(w);
+      p.volleysLeft -= 1;
+      p.volleyTimer += WPN.multiGapSec;
+    }
+  }
+}
+
+// One volley: a centre shot (two side by side with double shot), plus the
+// angled shots of scatter shot.
+function fireVolley(w) {
+  const p = w.player;
+  const WPN = w.cfg.weapon;
+  const speed = w.cfg.player.bulletSpeed;
+  const y = p.y - p.halfH - 8;
+  if (hasPower(w, POWER.double)) {
+    addBullet(w, p.x - WPN.doubleHalfGap, y, 0, -speed);
+    addBullet(w, p.x + WPN.doubleHalfGap, y, 0, -speed);
+  } else {
+    addBullet(w, p.x, y, 0, -speed);
+  }
+  if (hasPower(w, POWER.scatter)) {
+    for (let k = 0; k < WPN.scatterSin.length; k++) {
+      addBullet(w, p.x, y, WPN.scatterSin[k] * speed, -WPN.scatterCos[k] * speed);
+    }
+  }
+  w.events.push({ type: 'playerFire' });
+}
+
+function addBullet(w, x, y, vx, vy) {
+  const PB = w.playerBullets;
+  const b = spawn(PB);
+  if (b < 0) return;
+  PB.x[b] = x;
+  PB.y[b] = y;
+  PB.vx[b] = vx;
+  PB.vy[b] = vy;
 }
 
 // Enemies only shoot while diving, straight down, and never faster than their
@@ -67,10 +109,10 @@ export function updateEnemyFire(w, dt) {
 
 export function updateBullets(w, dt) {
   const PB = w.playerBullets;
-  const speed = w.cfg.player.bulletSpeed;
   for (let i = PB.n - 1; i >= 0; i--) {
-    PB.y[i] -= speed * dt;
-    if (PB.y[i] < -20) remove(PB, i);
+    PB.x[i] += PB.vx[i] * dt;
+    PB.y[i] += PB.vy[i] * dt;
+    if (PB.y[i] < -20 || PB.x[i] < -20 || PB.x[i] > w.W + 20) remove(PB, i);
   }
   const EB = w.enemyBullets;
   for (let i = EB.n - 1; i >= 0; i--) {
@@ -97,6 +139,8 @@ export function updateCollisions(w) {
     }
   }
 
+  // An active shield soaks up hits; its last hit starts a short grace period,
+  // which ends the checks for this step via the invuln test.
   const p = w.player;
   if (!p.alive || p.invuln > 0 || w.godMode) return;
   const EB = w.enemyBullets;
@@ -106,8 +150,8 @@ export function updateCollisions(w) {
       Math.abs(EB.y[b] - p.y) <= p.halfH + ENEMY_BULLET.halfH
     ) {
       remove(EB, b);
-      killPlayer(w);
-      return;
+      if (!absorbHit(w)) return killPlayer(w);
+      if (p.invuln > 0) return;
     }
   }
   for (let i = E.n - 1; i >= 0; i--) {
@@ -117,9 +161,11 @@ export function updateCollisions(w) {
       Math.abs(E.x[i] - p.x) <= w.enemyHalfW[type] + p.halfW &&
       Math.abs(E.y[i] - p.y) <= w.enemyHalfH[type] + p.halfH
     ) {
-      destroyEnemy(w, i, false);
-      killPlayer(w);
-      return;
+      // Ramming with a shield up counts as your kill.
+      const shielded = absorbHit(w);
+      destroyEnemy(w, i, shielded);
+      if (!shielded) return killPlayer(w);
+      if (p.invuln > 0) return;
     }
   }
 }
@@ -140,6 +186,7 @@ export function destroyEnemy(w, i, byPlayer) {
       w.newHiScore = true;
     }
     if (inFlight) spawnPopup(w, E.x[i], E.y[i], points, type);
+    maybeDropPickup(w, E.x[i], E.y[i], type);
   }
   spawnBlast(w, E.x[i], E.y[i], type);
   spawnDebris(w, E.x[i], E.y[i], type, 8 + tier * 4, 70 + tier * 30);
@@ -153,6 +200,7 @@ function killPlayer(w) {
   const kind = playerKind(w);
   p.alive = false;
   w.lives -= 1;
+  clearPowers(w);
   spawnBlast(w, p.x, p.y, kind);
   spawnDebris(w, p.x, p.y, kind, 30, 170);
   addShake(w, 8);

@@ -1,10 +1,12 @@
-// Visual-only systems: starfield, blast sprites, debris, score popups, shake.
+// Visual-only systems: starfield and warp, blast sprites, debris, popups,
+// screen shake and flash.
 import { spawn, remove } from '../core/pool.js';
 import { FX } from '../gfx/art.js';
 import { TAU } from '../core/util.js';
 
 export const STAR_COLORS = 6;
 export const POPUP_SEC = 0.9;
+export const LABEL_SEC = 1.4;
 
 export function initStars(w) {
   const S = w.stars;
@@ -21,9 +23,14 @@ export function initStars(w) {
 }
 
 export function updateFx(w, dt) {
+  // Ease the warp factor toward its target: a quick punch in, a longer coast out.
+  const warp = w.cfg.warp;
+  const tau = w.warpTarget > w.warp ? warp.rampUpSec : warp.rampDownSec;
+  w.warp += (w.warpTarget - w.warp) * (1 - Math.exp(-dt / Math.max(tau, 1e-3)));
+
   const S = w.stars;
   for (let i = 0; i < S.n; i++) {
-    S.y[i] += S.speed[i] * dt;
+    S.y[i] += S.speed[i] * w.warp * dt;
     if (S.y[i] > w.H) {
       S.y[i] -= w.H;
       S.x[i] = w.rng() * w.W;
@@ -55,10 +62,12 @@ export function updateFx(w, dt) {
   for (let i = U.n - 1; i >= 0; i--) {
     U.t[i] += dt;
     U.y[i] -= 26 * dt;
-    if (U.t[i] >= POPUP_SEC) remove(U, i);
+    if (U.t[i] >= (U.label[i] >= 0 ? LABEL_SEC : POPUP_SEC)) remove(U, i);
   }
 
   w.shake = w.shake > 0.1 ? w.shake * Math.exp(-7 * dt) : 0;
+  if (w.warp > 3) w.shake = Math.max(w.shake, 1.2); // engine rumble at warp speed
+  w.flash = w.flash > 0.01 ? w.flash * Math.exp(-5 * dt) : 0;
 }
 
 export function spawnBlast(w, x, y, kind) {
@@ -99,6 +108,22 @@ export function spawnPopup(w, x, y, value, kind) {
   U.t[i] = 0;
   U.value[i] = value;
   U.kind[i] = kind;
+  U.label[i] = -1;
+}
+
+// Announces a collected power-up by name above the player. Earlier labels
+// still on screen move up a line so quick pickups don't overprint.
+export function spawnLabel(w, x, y, power) {
+  const U = w.popups;
+  for (let k = 0; k < U.n; k++) if (U.label[k] >= 0) U.y[k] -= 12;
+  const i = spawn(U);
+  if (i < 0) return;
+  U.x[i] = x;
+  U.y[i] = y;
+  U.t[i] = 0;
+  U.value[i] = 0;
+  U.kind[i] = 0;
+  U.label[i] = power;
 }
 
 export function addShake(w, magnitude) {

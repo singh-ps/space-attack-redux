@@ -1,5 +1,5 @@
 // Game flow and the per-frame system schedule. Modes run
-// title → intro → playing ⇄ dying → cleared → intro … → victory | gameover.
+// title → intro → playing ⇄ dying → cleared (warp jump) → intro … → victory | gameover.
 import { compileConfig } from './core/config.js';
 import { createWorld, buildFormation } from './core/world.js';
 import { clear } from './core/pool.js';
@@ -7,6 +7,8 @@ import { pad } from './core/util.js';
 import { updatePlayer, updateEnemyFire, updateBullets, updateCollisions, destroyEnemy } from './systems/combat.js';
 import { updateFormation, updateDiveLaunches, updateEnemyMotion, countAttacking } from './systems/enemies.js';
 import { initStars, updateFx } from './systems/fx.js';
+import { updatePickups, updatePowers, clearPowers, clearPickups, spawnPickup } from './systems/pickups.js';
+import { POWERS } from './core/config.js';
 
 const MAX_STEP = 1 / 120; // simulation substep; keeps fast bullets from tunnelling
 const PAUSABLE = new Set(['intro', 'playing', 'dying', 'cleared']);
@@ -22,12 +24,15 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
     w.mode = mode;
     w.modeTime = 0;
     w.banner = banner;
+    w.warpTarget = 1; // only the level-clear jump runs at warp speed
   }
 
   function newGame() {
     w.score = 0;
     w.lives = cfg.player.lives;
     w.newHiScore = false;
+    clearPowers(w);
+    clearPickups(w);
     startLevel(0);
   }
 
@@ -39,6 +44,11 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
     clear(w.enemyBullets);
     resetPlayer(0);
     w.diveTimer = w.level.diveIntervalSec * 0.5;
+    if (w.warpTarget > 1) {
+      // Dropping out of warp into the new sector.
+      w.flash = 0.5;
+      w.events.push({ type: 'warpEnd' });
+    }
     setMode('intro', {
       style: 'level',
       kicker: index === 0 ? 'GET READY' : 'LEVEL UP',
@@ -85,7 +95,7 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
       style: 'clear',
       kicker: `LEVEL ${w.levelIndex + 1} COMPLETE`,
       title: 'SECTOR CLEARED',
-      sub: 'NEXT WAVE INBOUND',
+      sub: `WARPING TO LEVEL ${w.levelIndex + 2}`,
       duration: cfg.timing.levelClearSec,
     });
     w.events.push({ type: 'levelClear', level: w.levelIndex });
@@ -135,6 +145,11 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
         else respawn();
         break;
       case 'cleared':
+        if (w.warpTarget === 1 && t >= cfg.warp.engageDelaySec) {
+          w.warpTarget = cfg.warp.speedMul;
+          w.flash = 0.6;
+          w.events.push({ type: 'warpStart' });
+        }
         if (t >= cfg.timing.levelClearSec) startLevel(w.levelIndex + 1);
         break;
     }
@@ -151,7 +166,9 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
     updateEnemyMotion(w, dt);
     updateEnemyFire(w, dt);
     updateBullets(w, dt);
+    updatePickups(w, dt);
     updateCollisions(w);
+    if (w.mode === 'playing') updatePowers(w, dt);
     updateFlow();
   }
 
@@ -189,6 +206,12 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
     // Debug helper: destroys every enemy without scoring.
     clearWave() {
       for (let i = w.enemies.n - 1; i >= 0; i--) destroyEnemy(w, i, false);
+    },
+
+    // Debug helper: drops the next power-up capsule in turn above the player.
+    dropPickup() {
+      w.debugPower = ((w.debugPower ?? -1) + 1) % POWERS.length;
+      spawnPickup(w, w.player.x, w.player.y - 160, w.debugPower);
     },
   };
 }

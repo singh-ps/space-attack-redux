@@ -4,6 +4,7 @@
 import { createPool, spawn, clear } from './pool.js';
 import { mulberry32 } from './util.js';
 import { artSize } from '../gfx/art.js';
+import { POWERS } from './config.js';
 
 // Enemy flight states.
 export const ST = { FORMATION: 0, PEEL: 1, DIVE: 2, RETURN: 3 };
@@ -39,6 +40,10 @@ export function createWorld(cfg, seed) {
       alive: false,
       cooldown: 0,
       invuln: 0,
+      // Multi shot follow-up volleys still to fire, and the time to the next.
+      volleysLeft: 0,
+      volleyTimer: 0,
+      shieldHits: 0,
       halfW: (shipSize.w / 2) * hitScale,
       halfH: (shipSize.h / 2) * hitScale,
       minX: shipSize.w / 2 + 6,
@@ -49,6 +54,13 @@ export function createWorld(cfg, seed) {
     enemyHalfH: Float32Array.from(cfg.types.names, (n) => (artSize(n).h / 2) * 0.85),
     formation: { offset: 0, dir: 1 },
     diveTimer: 0,
+    // Seconds left on each power-up, indexed by POWERS (Infinity = until death).
+    powerTime: new Float32Array(POWERS.length),
+    lastDropTime: -Infinity,
+    // Warp-speed factor applied to the starfield, and where it is heading.
+    warp: 1,
+    warpTarget: 1,
+    flash: 0,
     enemies: createPool(64, {
       type: Uint8Array,
       state: Uint8Array,
@@ -68,11 +80,13 @@ export function createWorld(cfg, seed) {
       weave: Int8Array,
       appear: F,
     }),
-    playerBullets: createPool(16, { x: F, y: F }),
+    playerBullets: createPool(128, { x: F, y: F, vx: F, vy: F }),
     enemyBullets: createPool(64, { x: F, y: F, vy: F, kind: Uint8Array }),
     blasts: createPool(48, { x: F, y: F, t: F, kind: Uint8Array }),
     particles: createPool(512, { x: F, y: F, vx: F, vy: F, life: F, maxLife: F, kind: Uint8Array, color: Uint8Array }),
-    popups: createPool(24, { x: F, y: F, t: F, value: Uint32Array, kind: Uint8Array }),
+    pickups: createPool(8, { x: F, y: F, t: F, kind: Uint8Array }),
+    // label is a power id for pickup announcements, or -1 for a score.
+    popups: createPool(24, { x: F, y: F, t: F, value: Uint32Array, kind: Uint8Array, label: Int8Array }),
     stars: createPool(96, { x: F, y: F, speed: F, size: F, phase: F, color: Uint8Array }),
     banner: null,
     shake: 0,
@@ -82,7 +96,7 @@ export function createWorld(cfg, seed) {
   };
 }
 
-export const playerKind = (w) => w.cfg.types.count;
+export const playerKind = (w) => w.cfg.fxKind.player;
 
 export function slotX(w, col) {
   const f = w.cfg.formation;

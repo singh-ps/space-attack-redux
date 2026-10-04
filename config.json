@@ -3,6 +3,7 @@
 
   "player": {
     "speed": 250,
+    "autoFire": true,
     "fireCooldownSec": 0.35,
     "bulletSpeed": 640,
     "lives": 3,
@@ -20,6 +21,7 @@
       "fireCooldownSec": 0.9,
       "turnCooldownSec": 1.0,
       "bulletSpeed": 300,
+      "dropChance": 0.06,
       "targeting": { "mode": "direct" }
     },
     "alpha": {
@@ -30,6 +32,7 @@
       "fireCooldownSec": 0.7,
       "turnCooldownSec": 0.75,
       "bulletSpeed": 320,
+      "dropChance": 0.1,
       "targeting": { "mode": "weave", "offsetPx": 56 }
     },
     "omega": {
@@ -40,6 +43,7 @@
       "fireCooldownSec": 0.5,
       "turnCooldownSec": 0.5,
       "bulletSpeed": 340,
+      "dropChance": 0.3,
       "targeting": { "mode": "lead", "maxLeadSec": 1.0 }
     }
   },
@@ -48,6 +52,19 @@
     "rangeXPx": 150,
     "minGapAbovePlayerPx": 90,
     "firstShotDelaySec": 0.35
+  },
+
+  "pickups": {
+    "fallSpeed": 75,
+    "maxOnScreen": 2,
+    "minGapSec": 3,
+    "powers": {
+      "scatter": { "weight": 1, "durationSec": 10, "anglesDeg": [-15, 15] },
+      "multi": { "weight": 1, "durationSec": 10, "extraVolleys": 1, "volleyGapSec": 0.09 },
+      "double": { "weight": 1, "durationSec": 10, "spacingPx": 12 },
+      "shield": { "weight": 0.8, "durationSec": 12, "hits": 1, "graceSec": 0.6 },
+      "attackSpeed": { "weight": 1, "durationSec": 10, "cooldownMul": 0.5 }
+    }
   },
 
   "dive": {
@@ -90,8 +107,15 @@
 
   "timing": {
     "levelIntroSec": 2.4,
-    "levelClearSec": 2.6,
+    "levelClearSec": 3.0,
     "endScreenLockSec": 1.5
+  },
+
+  "warp": {
+    "speedMul": 24,
+    "engageDelaySec": 0.6,
+    "rampUpSec": 0.35,
+    "rampDownSec": 0.8
   },
 
   "audio": {

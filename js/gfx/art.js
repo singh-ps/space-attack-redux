@@ -115,4 +115,15 @@ export const FX = {
   alpha: { blast: ['#fff0fb', '#ff4fd8', '#9b3cff', '#ffa23c'], bullet: '#ff8ef0', size: 13, frames: 6, duration: 0.42 },
   omega: { blast: ['#ffffff', '#ffcc33', '#ff3344', '#7ff3ff'], bullet: '#ffb347', size: 17, frames: 7, duration: 0.55 },
   player: { blast: ['#ffffff', '#7ff3ff', '#3a6bff', '#ff3b4e'], bullet: '#fff6a8', size: 21, frames: 8, duration: 0.9 },
+  shield: { blast: ['#eafff3', '#39ff88', '#1fae5c', '#b8ffd6'], bullet: '#39ff88', size: 21, frames: 6, duration: 0.45 },
+};
+
+// Power-up capsules: a 9x9 capsule around a 5x5 icon ('x' marks icon pixels).
+export const PICKUP_ART_SIZE = 9;
+export const POWER_STYLE = {
+  scatter: { color: '#ff9a3c', label: 'SCATTER SHOT', short: 'SCATTER', icon: ['x.x.x', '.xxx.', '..x..', '..x..', '..x..'] },
+  multi: { color: '#ff4fd8', label: 'MULTI SHOT', short: 'MULTI', icon: ['..x..', '.xxx.', '..x..', '.xxx.', '..x..'] },
+  double: { color: '#3ee8ff', label: 'DOUBLE SHOT', short: 'DOUBLE', icon: ['.x.x.', '.x.x.', '.x.x.', '.x.x.', '.x.x.'] },
+  shield: { color: '#39ff88', label: 'SHIELD', short: 'SHIELD', icon: ['xxxxx', 'x...x', 'x...x', '.x.x.', '..x..'] },
+  attackSpeed: { color: '#ffd23f', label: 'ATTACK SPEED UP', short: 'SPEED', icon: ['..x..', '.x.x.', 'x.x.x', '.x.x.', 'x...x'] },
 };

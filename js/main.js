@@ -116,14 +116,15 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 
-// ?debug in the URL: G toggles invulnerability, K clears the wave, 1-5 jump
-// to a level, and the game object is exposed as window.game.
+// ?debug in the URL: G toggles invulnerability, K clears the wave, U drops a
+// power-up, 1-5 jump to a level, and the game object is exposed as window.game.
 function installDebugKeys(game, w) {
   window.game = game;
   const inGame = () => !['title', 'gameover', 'victory'].includes(w.mode);
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyG') w.godMode = !w.godMode;
     if (e.code === 'KeyK' && w.mode === 'playing') game.clearWave();
+    if (e.code === 'KeyU' && inGame()) game.dropPickup();
     const level = Number(e.key) - 1;
     if (e.code.startsWith('Digit') && level >= 0 && level < w.cfg.levels.length && inGame()) game.startLevel(level);
   });

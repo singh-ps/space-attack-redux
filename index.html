@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Attack Redux</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #05060f; }
+    body { display: grid; place-items: center; }
+    canvas { background: #05060f; box-shadow: 0 0 40px rgba(62, 232, 255, .15); }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="480" height="640"></canvas>
+  <script>
+    const ctx = document.getElementById('game').getContext('2d');
+    ctx.fillStyle = '#3ee8ff';
+    ctx.font = 'bold 28px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SPACE ATTACK REDUX', 240, 300);
+    ctx.fillStyle = '#8a93b8';
+    ctx.font = '14px monospace';
+    ctx.fillText('Coming soon', 240, 340);
+  </script>
+</body>
+</html>

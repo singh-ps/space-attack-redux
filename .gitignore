@@ -1,0 +1,9 @@
+# OS / editor
+.DS_Store
+.claude/
+
+# Reference art is kept local (would need Git LFS)
+game-ref.png
+
+# Local prompt notes
+prompt.md

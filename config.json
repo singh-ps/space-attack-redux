@@ -1,0 +1,104 @@
+{
+  "canvas": { "width": 480, "height": 640 },
+
+  "player": {
+    "speed": 250,
+    "fireCooldownSec": 0.35,
+    "bulletSpeed": 640,
+    "lives": 3,
+    "respawnDelaySec": 2.2,
+    "respawnInvulnSec": 1.5,
+    "hitboxScale": 0.6
+  },
+
+  "enemyTypes": {
+    "delta": {
+      "tier": 1,
+      "scoreFormation": 30,
+      "scoreFlight": 60,
+      "diveWeight": 1.0,
+      "fireCooldownSec": 0.9,
+      "turnCooldownSec": 1.0,
+      "bulletSpeed": 300,
+      "targeting": { "mode": "direct" }
+    },
+    "alpha": {
+      "tier": 2,
+      "scoreFormation": 50,
+      "scoreFlight": 100,
+      "diveWeight": 0.8,
+      "fireCooldownSec": 0.7,
+      "turnCooldownSec": 0.75,
+      "bulletSpeed": 320,
+      "targeting": { "mode": "weave", "offsetPx": 56 }
+    },
+    "omega": {
+      "tier": 3,
+      "scoreFormation": 100,
+      "scoreFlight": 300,
+      "diveWeight": 0.6,
+      "fireCooldownSec": 0.5,
+      "turnCooldownSec": 0.5,
+      "bulletSpeed": 340,
+      "targeting": { "mode": "lead", "maxLeadSec": 1.0 }
+    }
+  },
+
+  "enemyFire": {
+    "rangeXPx": 150,
+    "minGapAbovePlayerPx": 90,
+    "firstShotDelaySec": 0.35
+  },
+
+  "dive": {
+    "speed": 130,
+    "lateralSpeed": 120,
+    "steerGain": 1.5,
+    "steerAccel": 320,
+    "peelRadius": 18,
+    "peelSec": 0.5,
+    "returnSpeed": 170,
+    "onExitBottom": "return"
+  },
+
+  "formation": {
+    "columns": 7,
+    "spacingX": 46,
+    "spacingY": 34,
+    "topY": 92,
+    "swaySpeed": 20,
+    "swayRangePx": 44,
+    "appearSec": 0.35,
+    "rows": [
+      { "type": "omega", "cols": [2, 4] },
+      { "type": "alpha", "cols": [2, 3, 4] },
+      { "type": "alpha", "cols": [1, 2, 3, 4, 5] },
+      { "type": "delta", "cols": [0, 1, 2, 3, 4, 5, 6] },
+      { "type": "delta", "cols": [0, 1, 2, 3, 4, 5, 6] },
+      { "type": "delta", "cols": [0, 1, 2, 3, 4, 5, 6] },
+      { "type": "delta", "cols": [0, 1, 2, 3, 4, 5, 6] }
+    ]
+  },
+
+  "levels": [
+    { "rows": 5, "speedMul": 1.0, "diveIntervalSec": 2.4, "maxDivers": 2, "maxEnemyBullets": 4 },
+    { "rows": 5, "speedMul": 1.12, "diveIntervalSec": 2.2, "maxDivers": 3, "maxEnemyBullets": 5 },
+    { "rows": 6, "speedMul": 1.24, "diveIntervalSec": 2.0, "maxDivers": 3, "maxEnemyBullets": 6 },
+    { "rows": 6, "speedMul": 1.36, "diveIntervalSec": 1.8, "maxDivers": 4, "maxEnemyBullets": 7 },
+    { "rows": 7, "speedMul": 1.5, "diveIntervalSec": 1.6, "maxDivers": 4, "maxEnemyBullets": 8 }
+  ],
+
+  "timing": {
+    "levelIntroSec": 2.4,
+    "levelClearSec": 2.6,
+    "endScreenLockSec": 1.5
+  },
+
+  "audio": {
+    "master": 0.8,
+    "sfx": 0.9,
+    "music": 0.35,
+    "musicBpm": 132,
+    "musicBpmPerLevel": 5
+  }
+}

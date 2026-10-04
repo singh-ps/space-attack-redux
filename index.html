@@ -4,23 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Space Attack Redux</title>
-  <style>
-    html, body { margin: 0; height: 100%; background: #05060f; }
-    body { display: grid; place-items: center; }
-    canvas { background: #05060f; box-shadow: 0 0 40px rgba(62, 232, 255, .15); }
-  </style>
+  <meta name="description" content="A retro arcade space shooter built with HTML5 canvas.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 12' shape-rendering='crispEdges'%3E%3Cpath fill='%23eef3ff' d='M6 0h1v2h1v4h1v6H4V6h1V2h1z'/%3E%3Cpath fill='%237ff3ff' d='M6 2h1v4H6z'/%3E%3Cpath fill='%23ff3b4e' d='M0 9h1v3H0zM12 9h1v3h-1zM1 6h1v5H1zM11 6h1v5h-1z'/%3E%3Cpath fill='%233a6bff' d='M2 8h2v3H2zM9 8h2v3H9z'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <canvas id="game" width="480" height="640"></canvas>
-  <script>
-    const ctx = document.getElementById('game').getContext('2d');
-    ctx.fillStyle = '#3ee8ff';
-    ctx.font = 'bold 28px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('SPACE ATTACK REDUX', 240, 300);
-    ctx.fillStyle = '#8a93b8';
-    ctx.font = '14px monospace';
-    ctx.fillText('Coming soon', 240, 340);
-  </script>
+  <canvas id="game" width="480" height="640" aria-label="Space Attack Redux game"></canvas>
+  <pre id="error" role="alert" hidden></pre>
+  <noscript><p style="color:#fff;font-family:monospace">Space Attack Redux needs JavaScript.</p></noscript>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

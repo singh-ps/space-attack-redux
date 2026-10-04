@@ -8,7 +8,7 @@ import { POWER, hasPower, absorbHit, clearPowers, maybeDropPickup } from './pick
 export const PLAYER_BULLET = { halfW: 1.5, halfH: 6 };
 export const ENEMY_BULLET = { halfW: 1.5, halfH: 4.5 };
 
-export function updatePlayer(w, dt, input, firePressed) {
+export function updatePlayer(w, dt, input, firePressed, dragDx = 0) {
   const p = w.player;
   const P = w.cfg.player;
   p.cooldown = Math.max(0, p.cooldown - dt);
@@ -16,11 +16,24 @@ export function updatePlayer(w, dt, input, firePressed) {
   if (!p.alive) {
     p.vx = 0;
     p.vxSmooth = 0;
+    p.touchX = null;
     return;
   }
   const dir = (input.down('right') ? 1 : 0) - (input.down('left') ? 1 : 0);
   const prevX = p.x;
-  p.x = clamp(p.x + dir * P.speed * dt, p.minX, p.maxX);
+  if (dir === 0 && input.dragging?.()) {
+    // Touch steering: dragging moves a target point (clamped to the play
+    // area, so reversing at a wall responds at once) and the ship chases it,
+    // capped at its normal speed times touch.speedMul.
+    const T = w.cfg.touch;
+    if (p.touchX === null) p.touchX = p.x;
+    p.touchX = clamp(p.touchX + dragDx * T.dragSensitivity, p.minX, p.maxX);
+    const maxStep = P.speed * T.speedMul * dt;
+    p.x += clamp(p.touchX - p.x, -maxStep, maxStep);
+  } else {
+    p.touchX = null;
+    p.x = clamp(p.x + dir * P.speed * dt, p.minX, p.maxX);
+  }
   p.vx = (p.x - prevX) / dt;
   // Smoothed velocity feeds the omega's predictive targeting.
   p.vxSmooth += (p.vx - p.vxSmooth) * Math.min(1, dt * 5);

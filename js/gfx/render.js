@@ -5,6 +5,7 @@ import { ST } from '../core/world.js';
 import { POWERS } from '../core/config.js';
 import { POPUP_SEC, LABEL_SEC } from '../systems/fx.js';
 import { POWER } from '../systems/pickups.js';
+import { BUTTON_HALF, buttonVisible } from '../touch.js';
 import { clamp, pad, TAU } from '../core/util.js';
 
 export const FONT_FAMILY = '"Press Start 2P", "Courier New", monospace';
@@ -228,11 +229,14 @@ export function createRenderer(ctx, sprites) {
       for (let k = 0; k < w.lives; k++) ctx.drawImage(icon, 10 + k * (icon.width + 6), H - icon.height - 8);
       drawPowers(w);
     }
-    if (view.muted) text('SOUND OFF', W - 12, 52, 8, HUD.dim, 'right');
-    else if (!view.musicOn) text('MUSIC OFF', W - 12, 52, 8, HUD.dim, 'right');
+    // On touch screens the sound button shows this instead.
+    if (!view.touch) {
+      if (view.muted) text('SOUND OFF', W - 12, 52, 8, HUD.dim, 'right');
+      else if (!view.musicOn) text('MUSIC OFF', W - 12, 52, 8, HUD.dim, 'right');
+    }
   }
 
-  function drawTitle(w) {
+  function drawTitle(w, view) {
     const { W } = w;
     const cx = W / 2;
     glowText('SPACE ATTACK', cx, 126, 32, '#3ee8ff', '#0090ff');
@@ -259,13 +263,20 @@ export function createRenderer(ctx, sprites) {
       text(POWER_STYLE[name].short, x, 458, 8, POWER_STYLE[name].color, 'center');
     });
 
-    text('ARROWS / A D   MOVE', cx, 500, 8, HUD.dim, 'center');
-    text(w.cfg.player.autoFire ? 'HOLD SPACE / Z   FIRE' : 'SPACE / Z   FIRE', cx, 518, 8, HUD.dim, 'center');
-    text('P PAUSE   M MUTE   N MUSIC', cx, 536, 8, HUD.dim, 'center');
-    if (blink(w.time, 1.6)) text('PRESS ENTER TO START', cx, 590, 12, HUD.value, 'center');
+    const autoFire = w.cfg.player.autoFire;
+    if (view.touch) {
+      text('DRAG ANYWHERE TO MOVE', cx, 500, 8, HUD.dim, 'center');
+      text(autoFire ? 'KEEP A FINGER DOWN TO FIRE' : 'TAP TO FIRE', cx, 518, 8, HUD.dim, 'center');
+      text('SOUND AND PAUSE: TOP RIGHT', cx, 536, 8, HUD.dim, 'center');
+    } else {
+      text('ARROWS / A D   MOVE', cx, 500, 8, HUD.dim, 'center');
+      text(autoFire ? 'HOLD SPACE / Z   FIRE' : 'SPACE / Z   FIRE', cx, 518, 8, HUD.dim, 'center');
+      text('P PAUSE   M MUTE   N MUSIC', cx, 536, 8, HUD.dim, 'center');
+    }
+    if (blink(w.time, 1.6)) text(view.touch ? 'TAP TO START' : 'PRESS ENTER TO START', cx, 590, 12, HUD.value, 'center');
   }
 
-  function drawBanner(w) {
+  function drawBanner(w, view) {
     const b = w.banner;
     const s = BANNER[b.style];
     const t = w.modeTime;
@@ -276,7 +287,7 @@ export function createRenderer(ctx, sprites) {
     const { W } = w;
     const cx = W / 2;
     const cy = 364; // just below the deepest (7-row) formation
-    const tall = b.prompt ? 176 : 112;
+    const tall = b.restart ? 176 : 112;
     const bandH = tall * easeOut(enter);
 
     ctx.globalAlpha = alpha;
@@ -298,17 +309,68 @@ export function createRenderer(ctx, sprites) {
     const subY = top + 48 + size + 28;
     text(b.sub, cx, subY, 10, b.alert && blink(t, 4) ? s.alert : s.sub, 'center');
     if (b.note && blink(t, 3)) text(b.note, cx, subY + 24, 10, s.note, 'center');
-    if (b.prompt && t > w.cfg.timing.endScreenLockSec && blink(t, 1.6)) {
-      text(b.prompt, cx, subY + 52, 8, HUD.value, 'center');
+    if (b.restart && t > w.cfg.timing.endScreenLockSec && blink(t, 1.6)) {
+      text(view.touch ? 'TAP TO PLAY AGAIN' : 'PRESS ENTER TO PLAY AGAIN', cx, subY + 52, 8, HUD.value, 'center');
     }
     ctx.globalAlpha = 1;
   }
 
-  function drawPause(w) {
+  function drawPause(w, view) {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(0, 0, w.W, w.H);
     glowText('PAUSED', w.W / 2, w.H / 2, 24, '#ffffff', '#3ee8ff');
-    text('PRESS P TO RESUME', w.W / 2, w.H / 2 + 32, 8, HUD.dim, 'center');
+    text(view.touch ? 'TAP TO RESUME' : 'PRESS P TO RESUME', w.W / 2, w.H / 2 + 32, 8, HUD.dim, 'center');
+  }
+
+  // On-screen sound and pause buttons for touch screens.
+  function drawTouchButtons(w, view) {
+    const s = BUTTON_HALF;
+    for (const b of view.buttons) {
+      if (!buttonVisible(w, b)) continue;
+      ctx.fillStyle = 'rgba(4, 6, 20, 0.6)';
+      ctx.fillRect(b.x - s, b.y - s, s * 2, s * 2);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(201, 214, 255, 0.55)';
+      ctx.strokeRect(b.x - s + 0.75, b.y - s + 0.75, s * 2 - 1.5, s * 2 - 1.5);
+      ctx.fillStyle = '#ffffff';
+      if (b.action === 'pause') {
+        if (w.paused) {
+          ctx.beginPath();
+          ctx.moveTo(b.x - 4, b.y - 7);
+          ctx.lineTo(b.x + 7, b.y);
+          ctx.lineTo(b.x - 4, b.y + 7);
+          ctx.fill();
+        } else {
+          ctx.fillRect(b.x - 6, b.y - 7, 4, 14);
+          ctx.fillRect(b.x + 2, b.y - 7, 4, 14);
+        }
+        continue;
+      }
+      // Speaker, with sound waves or a red cross when muted.
+      ctx.beginPath();
+      ctx.moveTo(b.x - 9, b.y - 3);
+      ctx.lineTo(b.x - 5, b.y - 3);
+      ctx.lineTo(b.x, b.y - 8);
+      ctx.lineTo(b.x, b.y + 8);
+      ctx.lineTo(b.x - 5, b.y + 3);
+      ctx.lineTo(b.x - 9, b.y + 3);
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (view.muted) {
+        ctx.strokeStyle = '#ff5d73';
+        ctx.moveTo(b.x + 3, b.y - 4);
+        ctx.lineTo(b.x + 10, b.y + 4);
+        ctx.moveTo(b.x + 10, b.y - 4);
+        ctx.lineTo(b.x + 3, b.y + 4);
+      } else {
+        ctx.strokeStyle = '#ffffff';
+        ctx.arc(b.x + 1, b.y, 5, -0.9, 0.9);
+        ctx.moveTo(b.x + 1 + 9 * Math.cos(-0.9), b.y + 9 * Math.sin(-0.9));
+        ctx.arc(b.x + 1, b.y, 9, -0.9, 0.9);
+      }
+      ctx.stroke();
+    }
   }
 
   function drawDebug(w, view) {
@@ -337,7 +399,7 @@ export function createRenderer(ctx, sprites) {
       drawStars(w);
 
       if (w.mode === 'title') {
-        drawTitle(w);
+        drawTitle(w, view);
       } else {
         ctx.save();
         if (w.shake > 0) ctx.translate((Math.random() * 2 - 1) * w.shake, (Math.random() * 2 - 1) * w.shake);
@@ -355,8 +417,9 @@ export function createRenderer(ctx, sprites) {
         ctx.globalAlpha = 1;
       }
       drawHud(w, view);
-      if (w.paused) drawPause(w);
-      else if (w.banner) drawBanner(w);
+      if (w.paused) drawPause(w, view);
+      else if (w.banner) drawBanner(w, view);
+      if (view.touch) drawTouchButtons(w, view);
       if (view.debug) drawDebug(w, view);
     },
   };

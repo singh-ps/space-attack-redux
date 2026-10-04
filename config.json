@@ -12,6 +12,11 @@
     "hitboxScale": 0.6
   },
 
+  "touch": {
+    "dragSensitivity": 1.25,
+    "speedMul": 1.4
+  },
+
   "enemyTypes": {
     "delta": {
       "tier": 1,

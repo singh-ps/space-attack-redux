@@ -11,7 +11,7 @@ import { updatePickups, updatePowers, clearPowers, clearPickups, spawnPickup } f
 import { POWERS } from './core/config.js';
 
 const MAX_STEP = 1 / 120; // simulation substep; keeps fast bullets from tunnelling
-const PAUSABLE = new Set(['intro', 'playing', 'dying', 'cleared']);
+export const PAUSABLE = new Set(['intro', 'playing', 'dying', 'cleared']);
 
 export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
   const cfg = compileConfig(rawConfig);
@@ -108,7 +108,7 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
       title: 'GAME OVER',
       sub: `FINAL SCORE ${pad(w.score, 6)}`,
       note: w.newHiScore ? 'NEW HIGH SCORE!' : '',
-      prompt: 'PRESS ENTER TO PLAY AGAIN',
+      restart: true,
     });
     w.events.push({ type: 'gameOver', score: w.score, hiScore: w.hiScore });
   }
@@ -120,7 +120,7 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
       title: 'VICTORY!',
       sub: `FINAL SCORE ${pad(w.score, 6)}`,
       note: w.newHiScore ? 'NEW HIGH SCORE!' : '',
-      prompt: 'PRESS ENTER TO PLAY AGAIN',
+      restart: true,
     });
     w.events.push({ type: 'victory', score: w.score, hiScore: w.hiScore });
   }
@@ -155,12 +155,12 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
     }
   }
 
-  function step(dt, input, firePressed) {
+  function step(dt, input, firePressed, dragDx) {
     w.time += dt;
     w.modeTime += dt;
     updateFx(w, dt);
     if (w.mode === 'title') return;
-    updatePlayer(w, dt, input, firePressed);
+    updatePlayer(w, dt, input, firePressed, dragDx);
     updateFormation(w, dt);
     updateDiveLaunches(w, dt);
     updateEnemyMotion(w, dt);
@@ -193,13 +193,15 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
         return;
       }
       if (!(dt > 0)) return;
-      // Substep so collisions stay reliable on slow frames; a fire press
-      // only counts once per frame.
+      // Substep so collisions stay reliable on slow frames; a fire press and
+      // the frame's touch-drag movement only count once.
       const steps = Math.max(1, Math.ceil(dt / MAX_STEP));
       let firePressed = input.pressed('fire');
+      let dragDx = input.dragDx?.() ?? 0;
       for (let s = 0; s < steps; s++) {
-        step(dt / steps, input, firePressed);
+        step(dt / steps, input, firePressed, dragDx);
         firePressed = false;
+        dragDx = 0;
       }
     },
 

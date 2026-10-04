@@ -15,6 +15,17 @@ A retro arcade space shooter built with plain HTML5 canvas, JavaScript and CSS. 
 | M | Mute all sound |
 | N | Toggle the background music |
 
+On phones and tablets:
+
+| Touch | Action |
+| --- | --- |
+| Drag anywhere | Move. The ship follows how far your finger moves, not where it is, so your finger never covers the ship. |
+| Keep a finger down | Fire (auto fire) |
+| Tap | Start, play again, or resume after a pause |
+| Buttons, top right | Sound on/off and pause |
+
+On a phone held upright, the game sits at the top of the screen and the space below it is room for your thumb.
+
 ## How it plays
 
 - The invaders hold a formation at the top of the screen. From there they peel off and dive at a constant speed, steering toward you. A diver that leaves the bottom of the screen comes back in from the top and rejoins the formation, as in the arcade original.
@@ -50,6 +61,7 @@ All gameplay numbers are in [`config.json`](config.json). Edit the file and relo
 | Section | What it controls |
 | --- | --- |
 | `player` | Move speed, `autoFire` (hold to fire, or one shot per press), fire cooldown, bullet speed, lives, respawn delay and post-respawn invulnerability, hitbox size |
+| `touch` | `dragSensitivity` (ship travel per unit of finger travel) and `speedMul` (how much faster than `player.speed` the ship may chase your finger) |
 | `enemyTypes.*` | Per type: tier, points (`scoreFormation`, `scoreFlight`), how often it is picked to dive (`diveWeight`), `fireCooldownSec` (the minimum time between shots), `turnCooldownSec`, `bulletSpeed`, power-up `dropChance` (0 to 1), and `targeting` (`direct`, `weave` with `offsetPx`, or `lead` with `maxLeadSec`) |
 | `enemyFire` | When divers may shoot: horizontal range to you, minimum gap above you, delay before the first shot |
 | `pickups` | Capsule fall speed, how many can be on screen, the minimum gap between drops, and per power: `weight` (how likely it is to drop, 0 to disable), `durationSec` (0 means until you lose a ship) and its effect settings: scatter `anglesDeg`, multi `extraVolleys`/`volleyGapSec`, double `spacingPx`, shield `hits`/`graceSec`, attack speed `cooldownMul` |
@@ -85,6 +97,7 @@ js/systems/          enemies (formation, dives, steering), targeting, combat, pi
 js/gfx/              pixel art data, sprite rasterizer, renderer
 js/audio.js          synthesized sound effects and music (Web Audio API, no audio files)
 js/input.js          keyboard mapping
+js/touch.js          touch steering, tap actions and on-screen buttons
 ```
 
 The font is [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P), which is modelled on 1980s Namco arcade lettering.

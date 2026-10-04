@@ -14,11 +14,26 @@ body {
   height: 100%;
   background: var(--bg);
   overflow: hidden;
+  /* The game handles all touches: no panning, zooming, pull-to-refresh,
+     text selection or long-press callouts. */
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   display: grid;
   place-items: center;
+}
+
+/* Phones held upright: game at the top, free space below for the thumb. */
+@media (pointer: coarse) and (orientation: portrait) {
+  body {
+    place-items: start center;
+  }
 }
 
 canvas {
@@ -37,6 +52,8 @@ canvas {
   color: #ffd0d8;
   font: 13px/1.5 ui-monospace, Menlo, monospace;
   white-space: pre-wrap;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 #error[hidden] {

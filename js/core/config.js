@@ -74,6 +74,7 @@ function validate(raw) {
     num(raw.player?.[k], `player.${k}`);
   }
   if (typeof raw.player?.autoFire !== 'boolean') problems.push('player.autoFire must be true or false');
+  for (const k of ['dragSensitivity', 'speedMul']) num(raw.touch?.[k], `touch.${k}`);
   for (const k of ['speed', 'lateralSpeed', 'steerGain', 'steerAccel', 'peelRadius', 'peelSec', 'returnSpeed']) {
     num(raw.dive?.[k], `dive.${k}`);
   }

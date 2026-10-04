@@ -4,6 +4,7 @@ import { createGame } from './game.js';
 import { buildSprites } from './gfx/sprites.js';
 import { createRenderer, FONT_FAMILY } from './gfx/render.js';
 import { createKeyboard } from './input.js';
+import { createTouch, touchButtons } from './touch.js';
 import { createAudio } from './audio.js';
 
 const HI_SCORE_KEY = 'space-attack-redux:hiscore';
@@ -59,14 +60,41 @@ async function boot() {
   ]).catch(() => {});
 
   const renderer = createRenderer(ctx, buildSprites());
-  const input = createKeyboard(window);
   const audio = createAudio(w.cfg.audio);
+  const buttons = touchButtons(w.W);
+  const keyboard = createKeyboard(window);
+  const touch = createTouch({ canvas, world: w, buttons });
+  const input = {
+    down: (action) => keyboard.down(action) || touch.down(action),
+    pressed: (action) => keyboard.pressed(action) || touch.pressed(action),
+    dragging: touch.dragging,
+    dragDx: touch.dragDx,
+    endFrame() {
+      keyboard.endFrame();
+      touch.endFrame();
+    },
+  };
   const view = {
     debug: new URLSearchParams(location.search).has('debug'),
     fps: 60,
     muted: audio.muted,
     musicOn: audio.musicOn,
+    // Touch prompts and buttons show on touch screens, and follow whichever
+    // of touch or keyboard was used last.
+    touch: window.matchMedia('(pointer: coarse)').matches,
+    buttons,
   };
+  window.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch') view.touch = true;
+  });
+  window.addEventListener('keydown', () => {
+    view.touch = false;
+  });
+  // No long-press menus or pinch zoom getting in the way of play.
+  window.addEventListener('contextmenu', (e) => {
+    if (view.touch) e.preventDefault();
+  });
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
 
   function fit() {
     const dpr = window.devicePixelRatio || 1;
@@ -80,8 +108,11 @@ async function boot() {
   window.addEventListener('resize', fit);
   fit();
 
+  // Browsers allow audio only after a user gesture; for touch, that is the
+  // finger lifting, so listen for both ends of a tap.
   window.addEventListener('keydown', audio.unlock);
   window.addEventListener('pointerdown', audio.unlock);
+  window.addEventListener('pointerup', audio.unlock);
   window.addEventListener('blur', game.pause);
   window.addEventListener('pagehide', () => saveHiScore(w.hiScore));
   document.addEventListener('visibilitychange', () => {

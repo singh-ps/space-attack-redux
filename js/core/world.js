@@ -40,6 +40,8 @@ export function createWorld(cfg, seed) {
       alive: false,
       cooldown: 0,
       invuln: 0,
+      // Where touch steering is taking the ship (null when not touch-steering).
+      touchX: null,
       // Multi shot follow-up volleys still to fire, and the time to the next.
       volleysLeft: 0,
       volleyTimer: 0,

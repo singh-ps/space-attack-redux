@@ -1,5 +1,7 @@
-// Rasterizes the pixel art in art.js into offscreen canvases (browser only).
+// Rasterizes the pixel art in art.js into offscreen canvases, plus a glow
+// halo for each sprite (browser only).
 import { ART, PALETTES, FX, PIXEL, POWER_STYLE, PICKUP_ART_SIZE } from './art.js';
+import { makeGlow } from './glow.js';
 import { mulberry32, TAU } from '../core/util.js';
 
 function makeCanvas(w, h) {
@@ -86,17 +88,18 @@ function capsule(icon, color, scale, blink) {
 }
 
 export function buildSprites() {
-  const sprites = { blast: {} };
+  const sprites = { blast: {}, glow: {}, pickup: {}, pickupGlow: {}, pickupIcon: {} };
   for (const [name, frames] of Object.entries(ART)) {
     sprites[name] = frames.map((rows) => rasterize(rows, PALETTES[name], PIXEL));
+    sprites.glow[name] = sprites[name].map((img) => makeGlow(img, FX[name].glow, 4, 1.7));
   }
   sprites.lifeIcon = rasterize(ART.player[0], PALETTES.player, 2);
+  sprites.lifeGlow = makeGlow(sprites.lifeIcon, FX.player.glow, 3, 1.2);
   let seed = 11;
-  for (const [kind, fx] of Object.entries(FX)) sprites.blast[kind] = blastFrames(fx, seed++);
-  sprites.pickup = {};
-  sprites.pickupIcon = {};
+  for (const [kind, fx] of Object.entries(FX)) if (fx.size) sprites.blast[kind] = blastFrames(fx, seed++);
   for (const [name, style] of Object.entries(POWER_STYLE)) {
     sprites.pickup[name] = [capsule(style.icon, style.color, PIXEL, false), capsule(style.icon, style.color, PIXEL, true)];
+    sprites.pickupGlow[name] = makeGlow(sprites.pickup[name][0], style.color, 4, 1.8);
     sprites.pickupIcon[name] = capsule(style.icon, style.color, 2, false);
   }
   return sprites;

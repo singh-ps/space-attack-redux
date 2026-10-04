@@ -48,7 +48,7 @@ export function compileConfig(raw) {
     attackSpeedMul: P.attackSpeed.cooldownMul,
   };
 
-  const fxKinds = [...names, 'player', 'shield'];
+  const fxKinds = [...names, 'player', ...POWERS];
   const fxKind = Object.fromEntries(fxKinds.map((n, i) => [n, i]));
   return { ...raw, types, typeIndex, powers, weapon, fxKinds, fxKind };
 }

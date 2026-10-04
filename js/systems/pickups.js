@@ -4,7 +4,7 @@ import { POWERS } from '../core/config.js';
 import { spawn, remove, clear } from '../core/pool.js';
 import { clamp } from '../core/util.js';
 import { PICKUP_ART_SIZE, PIXEL } from '../gfx/art.js';
-import { spawnBlast, spawnDebris, spawnLabel } from './fx.js';
+import { explode, spawnRing, spawnSparks, spawnLabel } from './fx.js';
 
 export const POWER = Object.fromEntries(POWERS.map((name, i) => [name, i]));
 const PICKUP_HALF = (PICKUP_ART_SIZE * PIXEL) / 2;
@@ -72,7 +72,11 @@ export function grantPower(w, k) {
   const duration = w.cfg.powers.duration[k];
   w.powerTime[k] = duration > 0 ? duration : Infinity;
   if (k === POWER.shield) w.player.shieldHits = w.cfg.weapon.shieldHits;
-  spawnLabel(w, w.player.x, w.player.y - 34, k);
+  const p = w.player;
+  const kind = w.cfg.fxKind[POWERS[k]];
+  spawnRing(w, p.x, p.y, kind, 10, 50, 0.4, 3);
+  spawnSparks(w, p.x, p.y, kind, 10, 160);
+  spawnLabel(w, p.x, p.y - 34, k);
   w.events.push({ type: 'powerUp', power: k });
 }
 
@@ -104,15 +108,16 @@ export function absorbHit(w) {
   const p = w.player;
   if (!hasPower(w, POWER.shield) || p.shieldHits <= 0) return false;
   p.shieldHits -= 1;
+  const kind = w.cfg.fxKind.shield;
   if (p.shieldHits > 0) {
+    spawnRing(w, p.x, p.y, kind, 20, 34, 0.25, 2);
     w.events.push({ type: 'shieldHit' });
     return true;
   }
   w.powerTime[POWER.shield] = 0;
   p.invuln = Math.max(p.invuln, w.cfg.weapon.shieldGraceSec);
-  const kind = w.cfg.fxKind.shield;
-  spawnBlast(w, p.x, p.y, kind);
-  spawnDebris(w, p.x, p.y, kind, 16, 140);
+  explode(w, p.x, p.y, kind, 1.4);
+  spawnRing(w, p.x, p.y, kind, 24, 72, 0.4, 3);
   w.events.push({ type: 'shieldBreak' });
   return true;
 }

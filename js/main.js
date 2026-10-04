@@ -2,7 +2,7 @@
 // loop. Game rules live in game.js and js/systems/.
 import { createGame } from './game.js';
 import { buildSprites } from './gfx/sprites.js';
-import { createRenderer, FONT_FAMILY } from './gfx/render.js';
+import { createRenderer, FONT_FAMILY, DISPLAY_FONT, NEON_FONT } from './gfx/render.js';
 import { createKeyboard } from './input.js';
 import { createTouch, touchButtons } from './touch.js';
 import { createAudio } from './audio.js';
@@ -53,10 +53,11 @@ async function boot() {
   }
   const w = game.world;
 
-  // Canvas text needs the web font loaded first, but don't hang if offline.
+  // Canvas text needs the web fonts loaded first, but don't hang if offline.
+  const fonts = [`12px ${FONT_FAMILY}`, `900 40px ${DISPLAY_FONT}`, `40px ${NEON_FONT}`];
   await Promise.race([
-    document.fonts?.load(`12px ${FONT_FAMILY}`),
-    new Promise((resolve) => setTimeout(resolve, 1500)),
+    Promise.all(fonts.map((font) => document.fonts?.load(font))),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
   ]).catch(() => {});
 
   const renderer = createRenderer(ctx, buildSprites());
@@ -77,12 +78,15 @@ async function boot() {
   const view = {
     debug: new URLSearchParams(location.search).has('debug'),
     fps: 60,
+    cpuMs: 0, // update + draw time per frame, shown in the debug overlay
     muted: audio.muted,
     musicOn: audio.musicOn,
     // Touch prompts and buttons show on touch screens, and follow whichever
     // of touch or keyboard was used last.
     touch: window.matchMedia('(pointer: coarse)').matches,
     buttons,
+    // Tones down shake, glitch and hover for players who prefer less motion.
+    reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   };
   window.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'touch') view.touch = true;
@@ -96,9 +100,11 @@ async function boot() {
   });
   document.addEventListener('gesturestart', (e) => e.preventDefault());
 
+  // Phones use the whole screen; elsewhere leave a margin for the bezel glow.
+  const fill = window.matchMedia('(pointer: coarse)').matches ? 1 : 0.96;
   function fit() {
     const dpr = window.devicePixelRatio || 1;
-    const s = Math.min(window.innerWidth / w.W, window.innerHeight / w.H);
+    const s = Math.min(window.innerWidth / w.W, window.innerHeight / w.H) * fill;
     canvas.style.width = `${Math.floor(w.W * s)}px`;
     canvas.style.height = `${Math.floor(w.H * s)}px`;
     canvas.width = Math.round(w.W * s * dpr);
@@ -133,6 +139,7 @@ async function boot() {
     const dt = Math.min(Math.max(now - last, 0) / 1000, 1 / 20);
     last = now;
     view.fps += (1 / Math.max(dt, 1e-3) - view.fps) * 0.05;
+    const work = performance.now();
     if (input.pressed('mute')) view.muted = audio.toggleMute();
     if (input.pressed('music')) view.musicOn = audio.toggleMusic();
     game.frame(dt, input);
@@ -143,6 +150,7 @@ async function boot() {
     w.events.length = 0;
     renderer.draw(w, view);
     input.endFrame();
+    view.cpuMs += (performance.now() - work - view.cpuMs) * 0.05;
   }
   requestAnimationFrame(frame);
 }

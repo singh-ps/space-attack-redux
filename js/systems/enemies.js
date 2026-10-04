@@ -102,8 +102,12 @@ export function updateEnemyMotion(w, dt) {
       E.stateTime[i] += dt;
       const k = Math.min(E.stateTime[i] / D.peelSec, 1);
       const a = k * Math.PI;
+      const prevX = E.x[i];
+      const prevY = E.y[i];
       E.x[i] = E.peelX[i] + E.peelDir[i] * D.peelRadius * (1 - Math.cos(a));
       E.y[i] = E.peelY[i] - D.peelRadius * Math.sin(a);
+      E.vx[i] = (E.x[i] - prevX) / dt; // kept current for motion trails
+      E.vy[i] = (E.y[i] - prevY) / dt;
       if (k >= 1) {
         E.state[i] = ST.DIVE;
         E.stateTime[i] = 0;
@@ -149,6 +153,8 @@ export function updateEnemyMotion(w, dt) {
       } else {
         E.x[i] += (dx / dist) * step;
         E.y[i] += (dy / dist) * step;
+        E.vx[i] = (dx / dist) * D.returnSpeed * mul;
+        E.vy[i] = (dy / dist) * D.returnSpeed * mul;
       }
     }
   }

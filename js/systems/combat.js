@@ -2,7 +2,7 @@
 import { ST, playerKind } from '../core/world.js';
 import { spawn, remove } from '../core/pool.js';
 import { clamp } from '../core/util.js';
-import { spawnBlast, spawnDebris, spawnPopup, addShake } from './fx.js';
+import { explode, spawnRing, spawnPopup, addShake } from './fx.js';
 import { POWER, hasPower, absorbHit, clearPowers, maybeDropPickup } from './pickups.js';
 
 export const PLAYER_BULLET = { halfW: 1.5, halfH: 6 };
@@ -79,6 +79,7 @@ function fireVolley(w) {
       addBullet(w, p.x, y, WPN.scatterSin[k] * speed, -WPN.scatterCos[k] * speed);
     }
   }
+  p.muzzle = 0.06;
   w.events.push({ type: 'playerFire' });
 }
 
@@ -201,8 +202,7 @@ export function destroyEnemy(w, i, byPlayer) {
     if (inFlight) spawnPopup(w, E.x[i], E.y[i], points, type);
     maybeDropPickup(w, E.x[i], E.y[i], type);
   }
-  spawnBlast(w, E.x[i], E.y[i], type);
-  spawnDebris(w, E.x[i], E.y[i], type, 8 + tier * 4, 70 + tier * 30);
+  explode(w, E.x[i], E.y[i], type, 0.7 + tier * 0.3);
   if (tier >= 3) addShake(w, 3);
   w.events.push({ type: 'enemyDeath', tier, inFlight });
   remove(E, i);
@@ -214,8 +214,9 @@ function killPlayer(w) {
   p.alive = false;
   w.lives -= 1;
   clearPowers(w);
-  spawnBlast(w, p.x, p.y, kind);
-  spawnDebris(w, p.x, p.y, kind, 30, 170);
+  explode(w, p.x, p.y, kind, 2.6);
+  spawnRing(w, p.x, p.y, kind, 10, 150, 0.8, 4);
   addShake(w, 8);
+  w.glitch = 0.45;
   w.events.push({ type: 'playerDeath', livesLeft: w.lives });
 }

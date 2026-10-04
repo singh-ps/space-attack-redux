@@ -21,6 +21,9 @@ export function createWorld(cfg, seed) {
     W,
     H,
     rng: mulberry32(seed),
+    // Separate stream for purely visual randomness, so effects never shift
+    // gameplay randomness.
+    fxRng: mulberry32(seed ^ 0x9e3779b9),
     time: 0,
     mode: 'title',
     modeTime: 0,
@@ -40,6 +43,7 @@ export function createWorld(cfg, seed) {
       alive: false,
       cooldown: 0,
       invuln: 0,
+      muzzle: 0, // seconds left on the muzzle flash
       // Where touch steering is taking the ship (null when not touch-steering).
       touchX: null,
       // Multi shot follow-up volleys still to fire, and the time to the next.
@@ -62,7 +66,10 @@ export function createWorld(cfg, seed) {
     // Warp-speed factor applied to the starfield, and where it is heading.
     warp: 1,
     warpTarget: 1,
+    scroll: 0, // distance travelled, drives the scrolling grid floor
     flash: 0,
+    glitch: 0,
+    exhaustClock: 0,
     enemies: createPool(64, {
       type: Uint8Array,
       state: Uint8Array,
@@ -85,7 +92,20 @@ export function createWorld(cfg, seed) {
     playerBullets: createPool(128, { x: F, y: F, vx: F, vy: F }),
     enemyBullets: createPool(64, { x: F, y: F, vy: F, kind: Uint8Array }),
     blasts: createPool(48, { x: F, y: F, t: F, kind: Uint8Array }),
-    particles: createPool(512, { x: F, y: F, vx: F, vy: F, life: F, maxLife: F, kind: Uint8Array, color: Uint8Array }),
+    // style: 0 pixel debris, 1 spark streak, 2 glow dot (see fx.js).
+    particles: createPool(768, {
+      x: F,
+      y: F,
+      vx: F,
+      vy: F,
+      life: F,
+      maxLife: F,
+      size: F,
+      kind: Uint8Array,
+      color: Uint8Array,
+      style: Uint8Array,
+    }),
+    rings: createPool(32, { x: F, y: F, t: F, dur: F, r0: F, r1: F, width: F, kind: Uint8Array }),
     pickups: createPool(8, { x: F, y: F, t: F, kind: Uint8Array }),
     // label is a power id for pickup announcements, or -1 for a score.
     popups: createPool(24, { x: F, y: F, t: F, value: Uint32Array, kind: Uint8Array, label: Int8Array }),

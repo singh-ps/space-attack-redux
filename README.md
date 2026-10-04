@@ -1,6 +1,6 @@
 # Space Attack Redux
 
-A retro arcade space shooter built with plain HTML5 canvas, JavaScript and CSS. There is no build step and no dependencies.
+A neo-retro arcade space shooter built with plain HTML5 canvas, JavaScript and CSS. Chunky pixel-art sprites are lit with neon glow over a synthwave sunset and grid, inside a CRT-style frame. There is no build step and no dependencies.
 
 **Play it at https://singh-ps.github.io/space-attack-redux/**
 
@@ -94,10 +94,10 @@ js/main.js           boot, canvas scaling, main loop
 js/game.js           game flow (title, levels, deaths, victory) and system order
 js/core/             world data, SoA pools, config compiler, helpers
 js/systems/          enemies (formation, dives, steering), targeting, combat, pickups (power-ups), fx
-js/gfx/              pixel art data, sprite rasterizer, renderer
+js/gfx/              pixel art and colours, sprite rasterizer, glow textures, synthwave backdrop, renderer
 js/audio.js          synthesized sound effects and music (Web Audio API, no audio files)
 js/input.js          keyboard mapping
 js/touch.js          touch steering, tap actions and on-screen buttons
 ```
 
-The font is [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P), which is modelled on 1980s Namco arcade lettering.
+The HUD and body text use [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P), modelled on 1980s Namco arcade lettering. Titles use [Orbitron](https://fonts.google.com/specimen/Orbitron) in chrome, and the "REDUX" sign uses [Monoton](https://fonts.google.com/specimen/Monoton). If your system asks for reduced motion, the game tones down screen shake and skips the glitch effect.

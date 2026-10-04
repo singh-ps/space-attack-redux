@@ -66,7 +66,8 @@ export function createWorld(cfg, seed) {
     // Warp-speed factor applied to the starfield, and where it is heading.
     warp: 1,
     warpTarget: 1,
-    scroll: 0, // distance travelled, drives the scrolling grid floor
+    scroll: 0, // distance travelled (faster at warp), drives the backdrop
+    levelScroll: 0, // scroll at the start of the level, for the passing planet
     flash: 0,
     glitch: 0,
     exhaustClock: 0,

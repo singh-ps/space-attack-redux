@@ -1,6 +1,6 @@
-// Canvas renderer, neo-retro style: a synthwave backdrop, chunky pixel
-// sprites lit by additive neon glow, light trails, shockwaves and sparks,
-// chrome display type, and a glitch on big hits. It reads the world and never
+// Canvas renderer, neo-retro style: a pixel deep-space backdrop, chunky
+// pixel sprites lit by additive neon glow, light trails, shockwaves and
+// sparks, chrome display type, and a glitch on big hits. It reads the world and never
 // changes it. All drawing is in world units; the transform maps them to
 // device pixels.
 import { FX, NEON, POWER_STYLE } from './art.js';
@@ -144,9 +144,16 @@ export function createRenderer(ctx, sprites) {
     for (let i = 0; i < S.n; i++) {
       const twinkle = 0.55 + 0.45 * Math.sin(w.time * 3 + S.phase[i]);
       const len = S.speed[i] * smear;
-      ctx.globalAlpha = Math.min(1, (S.size[i] > 1 ? twinkle : twinkle * 0.7) + smear);
+      const bright = S.size[i] > 1;
+      ctx.globalAlpha = Math.min(1, (bright ? twinkle : twinkle * 0.7) + smear);
       ctx.fillStyle = STAR_PALETTE[S.color[i]];
       ctx.fillRect(S.x[i], S.y[i] - len, S.size[i], S.size[i] + len);
+      if (bright && smear < 0.05) {
+        // Four-point glint on the brightest stars.
+        ctx.globalAlpha = twinkle * 0.45;
+        ctx.fillRect(S.x[i] - 3, S.y[i] + 0.5, 8, 1);
+        ctx.fillRect(S.x[i] + 0.5, S.y[i] - 3, 1, 8);
+      }
     }
     ctx.globalAlpha = 1;
   }
@@ -648,9 +655,9 @@ export function createRenderer(ctx, sprites) {
     draw(w, view) {
       ctx.setTransform(scale, 0, 0, scale, 0, 0);
       ctx.imageSmoothingEnabled = false;
-      background.drawSky(ctx, w, scale);
+      background.drawBack(ctx, w, scale);
       drawStars(w);
-      background.drawLand(ctx, w);
+      background.drawFront(ctx, w);
 
       if (w.mode === 'title') {
         drawTitle(w, view);

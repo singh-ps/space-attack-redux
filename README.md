@@ -1,6 +1,6 @@
 # Space Attack Redux
 
-A neo-retro arcade space shooter built with plain HTML5 canvas, JavaScript and CSS. Chunky pixel-art sprites are lit with neon glow over a synthwave sunset and grid, inside a CRT-style frame. There is no build step and no dependencies.
+A neo-retro arcade space shooter built with plain HTML5 canvas, JavaScript and CSS. Chunky pixel-art sprites are lit with neon glow against pixel-art deep space (dithered nebulae, ringed planets, glinting stars) inside a CRT-style frame. There is no build step and no dependencies.
 
 **Play it at https://singh-ps.github.io/space-attack-redux/**
 
@@ -32,7 +32,7 @@ On a phone held upright, the game sits at the top of the screen and the space be
 - Enemies shoot straight down, and only while they are diving.
 - Every hit is a kill, for you and for them. You have 3 ships.
 - Clear all 5 levels to win. Each level is faster than the one before, and the formation grows from 5 rows to 7.
-- Clearing a level makes the jump to the next sector at warp speed.
+- Each level is a different sector of space with its own nebula colours and planet. Clearing a level makes the jump to the next sector at warp speed.
 
 | Enemy | Tier | Targeting | In formation | In flight |
 | --- | --- | --- | --- | --- |
@@ -94,7 +94,7 @@ js/main.js           boot, canvas scaling, main loop
 js/game.js           game flow (title, levels, deaths, victory) and system order
 js/core/             world data, SoA pools, config compiler, helpers
 js/systems/          enemies (formation, dives, steering), targeting, combat, pickups (power-ups), fx
-js/gfx/              pixel art and colours, sprite rasterizer, glow textures, synthwave backdrop, renderer
+js/gfx/              pixel art and colours, sprite rasterizer, glow textures, generated space backdrop, renderer
 js/audio.js          synthesized sound effects and music (Web Audio API, no audio files)
 js/input.js          keyboard mapping
 js/touch.js          touch steering, tap actions and on-screen buttons

@@ -44,6 +44,7 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
     clear(w.enemyBullets);
     resetPlayer(0);
     w.diveTimer = w.level.diveIntervalSec * 0.5;
+    w.levelScroll = w.scroll; // each level is a new sector of space
     if (w.warpTarget > 1) {
       // Dropping out of warp into the new sector.
       w.flash = 0.5;

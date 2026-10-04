@@ -96,7 +96,10 @@ async function boot() {
 
   let last = performance.now();
   function frame(now) {
-    const dt = Math.min((now - last) / 1000, 1 / 20);
+    // Queue the next frame first so one bad frame can't stop the loop.
+    requestAnimationFrame(frame);
+    // The first rAF timestamp can predate `last`, so never let dt go negative.
+    const dt = Math.min(Math.max(now - last, 0) / 1000, 1 / 20);
     last = now;
     view.fps += (1 / Math.max(dt, 1e-3) - view.fps) * 0.05;
     if (input.pressed('mute')) view.muted = audio.toggleMute();
@@ -109,7 +112,6 @@ async function boot() {
     w.events.length = 0;
     renderer.draw(w, view);
     input.endFrame();
-    requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 }

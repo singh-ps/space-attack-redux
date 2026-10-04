@@ -175,6 +175,7 @@ export function createGame(rawConfig, { seed = 1, hiScore = 0 } = {}) {
         newGame();
         return;
       }
+      if (!(dt > 0)) return;
       // Substep so collisions stay reliable on slow frames; a fire press
       // only counts once per frame.
       const steps = Math.max(1, Math.ceil(dt / MAX_STEP));
